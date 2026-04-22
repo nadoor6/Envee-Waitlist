@@ -77,7 +77,7 @@
             margin: 0 auto 2rem auto;
             line-height: 1.6;
         }
-        /* ----- LUXURY COUNTDOWN TIMER ----- */
+        /* Countdown timer */
         
         .countdown-container {
             margin: 1.5rem auto 2rem;
@@ -224,10 +224,72 @@
             border-top: 1px solid rgba(90, 22, 25, 0.1);
             padding-top: 1.5rem;
         }
+        /* MUSIC BUTTON - LUXURY STYLE */
+        
+        .music-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #5a1619;
+            color: #f9f6ef;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(90, 22, 25, 0.3);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            font-size: 1.4rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(249, 246, 239, 0.2);
+        }
+        
+        .music-btn:hover {
+            transform: scale(1.05);
+            background: #3f0e11;
+            box-shadow: 0 6px 16px rgba(90, 22, 25, 0.4);
+        }
+        
+        .music-btn.playing {
+            background: #3f0e11;
+            box-shadow: 0 0 12px rgba(90, 22, 25, 0.5);
+        }
+        /* tooltip */
+        
+        .music-btn::after {
+            content: "Play music";
+            position: absolute;
+            right: 60px;
+            background: rgba(90, 22, 25, 0.85);
+            color: #f9f6ef;
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 40px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .music-btn:hover::after {
+            opacity: 1;
+        }
         
         @media (max-width: 550px) {
             .card {
                 padding: 1.8rem;
+            }
+            .music-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 1.2rem;
+                bottom: 16px;
+                right: 16px;
             }
         }
     </style>
@@ -242,7 +304,7 @@
         <div class="tagline">GRAPHIC DESIGN & WEB DEVELOPMENT</div>
         <div class="description">Luxury digital craftsmanship — from bold identities to seamless web experiences.</div>
 
-        <!-- LUXURY COUNTDOWN TIMER -->
+        <!-- COUNTDOWN TIMER -->
         <div class="countdown-container">
             <div class="countdown-label">Opening in</div>
             <div class="timer" id="luxuryTimer">
@@ -278,28 +340,34 @@
         <div class="footer">No spam, only rare updates</div>
     </div>
 
+    <!-- MUSIC BUTTON & AUDIO ELEMENT -->
+    <div class="music-btn" id="musicToggle">♪</div>
+    <audio id="bgMusic" loop preload="auto">
+        <source src="background-music.mp3" type="audio/mpeg">
+        <!-- fallback: if your file is .wav, add another line -->
+        Your browser does not support the audio element.
+    </audio>
+
     <script>
-        // Set the target date: July 1, 2026, 00:00:00 local time
-        const targetDate = new Date(2026, 6, 1, 0, 0, 0); // month 6 = July
+        // ========== COUNTDOWN TIMER ==========
+        const targetDate = new Date(2026, 6, 1, 0, 0, 0); // July 1, 2026
 
         function updateCountdown() {
             const now = new Date();
             const diff = targetDate - now;
 
             if (diff <= 0) {
-                // Timer expired
                 document.getElementById('days').innerText = '00';
                 document.getElementById('hours').innerText = '00';
                 document.getElementById('minutes').innerText = '00';
                 document.getElementById('seconds').innerText = '00';
-                // Optional: change label text
                 const label = document.querySelector('.countdown-label');
                 if (label) label.innerText = 'Now open';
                 return;
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (86400000)) / (3600000));
+            const hours = Math.floor((diff % 86400000) / 3600000);
             const minutes = Math.floor((diff % 3600000) / 60000);
             const seconds = Math.floor((diff % 60000) / 1000);
 
@@ -308,44 +376,71 @@
             document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
             document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
         }
-
-        // Update immediately and then every second
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // Waitlist form logic (unchanged, but kept elegant)
-        const form = document.getElementById('waitlistForm');
-        const emailInput = document.getElementById('email');
-        const msgDiv = document.getElementById('message');
+        // ========== BACKGROUND MUSIC PLAYER ==========
+        const audio = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicToggle');
+        let isPlaying = false;
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = emailInput.value.trim();
-            const isValid = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email);
-            if (!email) {
-                showMessage('Please enter your email address.', true);
-            } else if (!isValid) {
-                showMessage('Please use a valid email (e.g., name@domain.com).', true);
+        // Function to update button appearance and tooltip text
+        function updateMusicButton() {
+            if (isPlaying) {
+                musicBtn.innerHTML = '♫';
+                musicBtn.classList.add('playing');
+                musicBtn.setAttribute('aria-label', 'Pause music');
+                // Change tooltip text via pseudo-element is tricky; we'll update a data attribute and use CSS? 
+                // simpler: we'll change the pseudo-element content by toggling a class but CSS can't change content dynamically.
+                // We'll instead update the title attribute for native tooltip.
+                musicBtn.title = 'Pause music';
             } else {
-                showMessage(`${email.split('@')[0]}, you're now on the list. We'll contact you soon.`, false);
-                emailInput.value = '';
-                const btn = document.querySelector('.btn');
-                const original = btn.innerText;
-                btn.disabled = true;
-                btn.innerText = '✓ Added';
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.innerText = original;
-                }, 1500);
+                musicBtn.innerHTML = '♪';
+                musicBtn.classList.remove('playing');
+                musicBtn.title = 'Play music';
+            }
+        }
+
+        // Attempt to play (browsers often block autoplay, so we rely on user click)
+        function playMusic() {
+            audio.play().then(() => {
+                isPlaying = true;
+                updateMusicButton();
+            }).catch(err => {
+                console.log("Autoplay blocked. User must click the button.");
+                isPlaying = false;
+                updateMusicButton();
+            });
+        }
+
+        function pauseMusic() {
+            audio.pause();
+            isPlaying = false;
+            updateMusicButton();
+        }
+
+        // Toggle on button click
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isPlaying) {
+                pauseMusic();
+            } else {
+                playMusic();
             }
         });
 
-        function showMessage(text, isError) {
-            msgDiv.innerHTML = `<div class="${isError ? 'error' : 'success'}">${text}</div>`;
-            setTimeout(() => {
-                if (msgDiv.innerHTML.includes(text)) msgDiv.innerHTML = '';
-            }, 4000);
-        }
+        // Optional: Try to autoplay on page load (usually blocked, but doesn't hurt)
+        // We'll also set a one-time user gesture listener on the whole document as fallback?
+        // Better: if the user clicks anywhere on the page, we could try to play if music hasn't started yet.
+        // But to keep simple, we rely solely on the button click. 
+        // For a luxury feel, we can also start music on first interaction with the waitlist form.
+        // But we'll keep it clean: the button is the only control.
+
+        // Initialize button state (not playing)
+        updateMusicButton();
+
+        // Note: if the music file is named differently, change the src above.
+        // Supported formats: MP3, WAV, OGG. You can add multiple <source> lines.
     </script>
 </body>
 
