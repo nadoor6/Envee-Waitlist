@@ -344,7 +344,7 @@
     <div class="music-btn" id="musicToggle">♪</div>
     <audio id="bgMusic" loop preload="auto">
         <source src="background-music.mp3" type="audio/mpeg">
-        <!-- fallback: if your file is .wav, add another line -->
+        <!-- If your file is .wav, add a second source line -->
         Your browser does not support the audio element.
     </audio>
 
@@ -379,21 +379,94 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // ========== BACKGROUND MUSIC PLAYER ==========
+        // ========== BACKGROUND MUSIC WITH FADE-IN ==========
         const audio = document.getElementById('bgMusic');
         const musicBtn = document.getElementById('musicToggle');
         let isPlaying = false;
+        let fadeInterval = null;
 
-        // Function to update button appearance and tooltip text
+        // Function to stop any ongoing fade
+        function stopFade() {
+            if (fadeInterval) {
+                clearInterval(fadeInterval);
+                fadeInterval = null;
+            }
+        }
+
+        // Fade-in over specified duration (ms)
+        function fadeIn(audioElement, duration = 2000) {
+            return new Promise((resolve) => {
+                // If already fading, stop previous
+                stopFade();
+                // Set volume to 0
+                audioElement.volume = 0;
+                // Ensure audio is playing
+                audioElement.play().then(() => {
+                    const startTime = performance.now();
+                    const startVolume = 0;
+                    const endVolume = 1;
+
+                    function step(now) {
+                        const elapsed = now - startTime;
+                        let progress = Math.min(1, elapsed / duration);
+                        // Easing function: cubic out for smooth start
+                        const easeProgress = 1 - Math.pow(1 - progress, 3);
+                        audioElement.volume = startVolume + (endVolume - startVolume) * easeProgress;
+
+                        if (progress < 1) {
+                            fadeInterval = requestAnimationFrame(step);
+                        } else {
+                            audioElement.volume = 1;
+                            stopFade();
+                            resolve();
+                        }
+                    }
+
+                    fadeInterval = requestAnimationFrame(step);
+                }).catch(err => {
+                    console.warn("Playback failed:", err);
+                    resolve(); // still resolve to avoid hanging
+                });
+            });
+        }
+
+        // Pause and reset volume (no fade-out needed, but we set volume to 1 for next fade-in)
+        function pauseMusic() {
+            stopFade();
+            audio.pause();
+            // Keep volume at 1 so next fade-in starts from 0 anyway
+            isPlaying = false;
+            updateMusicButton();
+        }
+
+        // Start playing with fade-in
+        async function playMusicWithFade() {
+            // If already playing, do nothing
+            if (isPlaying) return;
+            // Reset volume to 0 before fade
+            audio.volume = 0;
+            await fadeIn(audio, 2000);
+            isPlaying = true;
+            updateMusicButton();
+        }
+
+        // Toggle play/pause
+        async function toggleMusic() {
+            if (isPlaying) {
+                pauseMusic();
+            } else {
+                await playMusicWithFade();
+            }
+        }
+
+        // Update button UI
         function updateMusicButton() {
             if (isPlaying) {
                 musicBtn.innerHTML = '♫';
                 musicBtn.classList.add('playing');
-                musicBtn.setAttribute('aria-label', 'Pause music');
-                // Change tooltip text via pseudo-element is tricky; we'll update a data attribute and use CSS? 
-                // simpler: we'll change the pseudo-element content by toggling a class but CSS can't change content dynamically.
-                // We'll instead update the title attribute for native tooltip.
                 musicBtn.title = 'Pause music';
+                // Update pseudo-element content alternative? We'll rely on title.
+                // Also change tooltip text via CSS? Not needed.
             } else {
                 musicBtn.innerHTML = '♪';
                 musicBtn.classList.remove('playing');
@@ -401,46 +474,17 @@
             }
         }
 
-        // Attempt to play (browsers often block autoplay, so we rely on user click)
-        function playMusic() {
-            audio.play().then(() => {
-                isPlaying = true;
-                updateMusicButton();
-            }).catch(err => {
-                console.log("Autoplay blocked. User must click the button.");
-                isPlaying = false;
-                updateMusicButton();
-            });
-        }
-
-        function pauseMusic() {
-            audio.pause();
-            isPlaying = false;
-            updateMusicButton();
-        }
-
-        // Toggle on button click
+        // Event listener for button click
         musicBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (isPlaying) {
-                pauseMusic();
-            } else {
-                playMusic();
-            }
+            toggleMusic();
         });
 
-        // Optional: Try to autoplay on page load (usually blocked, but doesn't hurt)
-        // We'll also set a one-time user gesture listener on the whole document as fallback?
-        // Better: if the user clicks anywhere on the page, we could try to play if music hasn't started yet.
-        // But to keep simple, we rely solely on the button click. 
-        // For a luxury feel, we can also start music on first interaction with the waitlist form.
-        // But we'll keep it clean: the button is the only control.
-
-        // Initialize button state (not playing)
+        // Initialize: not playing, volume set to 0 (so no sudden sound)
+        audio.volume = 0;
         updateMusicButton();
 
-        // Note: if the music file is named differently, change the src above.
-        // Supported formats: MP3, WAV, OGG. You can add multiple <source> lines.
+        // Optional: Preload metadata, but no autoplay.
     </script>
 </body>
 
