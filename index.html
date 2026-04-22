@@ -48,18 +48,6 @@
             margin-bottom: 1.2rem;
         }
         
-        .brand h1 {
-            font-size: 4rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            color: #2a2522;
-        }
-        
-        .brand h1 span {
-            font-weight: 300;
-            color: #5a1619;
-        }
-        
         .badge {
             background: #5a1619;
             color: #f9f6ef;
@@ -88,6 +76,70 @@
             max-width: 500px;
             margin: 0 auto 2rem auto;
             line-height: 1.6;
+        }
+        /* ----- LUXURY COUNTDOWN TIMER ----- */
+        
+        .countdown-container {
+            margin: 1.5rem auto 2rem;
+            max-width: 450px;
+        }
+        
+        .countdown-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #5a1619;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+        }
+        
+        .timer {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+        
+        .time-block {
+            background: rgba(90, 22, 25, 0.04);
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            padding: 0.8rem 0.6rem;
+            min-width: 70px;
+            text-align: center;
+            transition: all 0.2s;
+            border: 1px solid rgba(90, 22, 25, 0.1);
+        }
+        
+        .time-number {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #2a2522;
+            line-height: 1;
+            font-feature-settings: "tnum";
+            letter-spacing: -0.02em;
+        }
+        
+        .time-unit {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: #5a1619;
+            margin-top: 0.3rem;
+        }
+        
+        @media (max-width: 480px) {
+            .timer {
+                gap: 0.8rem;
+            }
+            .time-block {
+                min-width: 60px;
+                padding: 0.6rem 0.4rem;
+            }
+            .time-number {
+                font-size: 1.6rem;
+            }
         }
         
         .waitlist-title {
@@ -177,9 +229,6 @@
             .card {
                 padding: 1.8rem;
             }
-            .brand h1 {
-                font-size: 3rem;
-            }
         }
     </style>
 </head>
@@ -192,6 +241,30 @@
         <div class="badge">Opening July 2026</div>
         <div class="tagline">GRAPHIC DESIGN & WEB DEVELOPMENT</div>
         <div class="description">Luxury digital craftsmanship — from bold identities to seamless web experiences.</div>
+
+        <!-- LUXURY COUNTDOWN TIMER -->
+        <div class="countdown-container">
+            <div class="countdown-label">Opening in</div>
+            <div class="timer" id="luxuryTimer">
+                <div class="time-block">
+                    <div class="time-number" id="days">00</div>
+                    <div class="time-unit">Days</div>
+                </div>
+                <div class="time-block">
+                    <div class="time-number" id="hours">00</div>
+                    <div class="time-unit">Hours</div>
+                </div>
+                <div class="time-block">
+                    <div class="time-number" id="minutes">00</div>
+                    <div class="time-unit">Minutes</div>
+                </div>
+                <div class="time-block">
+                    <div class="time-number" id="seconds">00</div>
+                    <div class="time-unit">Seconds</div>
+                </div>
+            </div>
+        </div>
+
         <div class="waitlist-title">Join the waitlist</div>
         <div class="waitlist-sub">Be first to access our exclusive studio services.</div>
 
@@ -206,6 +279,41 @@
     </div>
 
     <script>
+        // Set the target date: July 1, 2026, 00:00:00 local time
+        const targetDate = new Date(2026, 6, 1, 0, 0, 0); // month 6 = July
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                // Timer expired
+                document.getElementById('days').innerText = '00';
+                document.getElementById('hours').innerText = '00';
+                document.getElementById('minutes').innerText = '00';
+                document.getElementById('seconds').innerText = '00';
+                // Optional: change label text
+                const label = document.querySelector('.countdown-label');
+                if (label) label.innerText = 'Now open';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (86400000)) / (3600000));
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            document.getElementById('days').innerText = String(days).padStart(2, '0');
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+        }
+
+        // Update immediately and then every second
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Waitlist form logic (unchanged, but kept elegant)
         const form = document.getElementById('waitlistForm');
         const emailInput = document.getElementById('email');
         const msgDiv = document.getElementById('message');
