@@ -219,7 +219,7 @@
             } else if (!isValid) {
                 showMessage('Please use a valid email (e.g., name@domain.com).', true);
             } else {
-                showMessage(`✨ ${email.split('@')[0]}, you're on the list. We'll contact you soon. ✨`, false);
+                showMessage(`${email.split('@')[0]}, you're on the list. We'll contact you soon.`, false);
                 emailInput.value = '';
                 const btn = document.querySelector('.btn');
                 const original = btn.innerText;
