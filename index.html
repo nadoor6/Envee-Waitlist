@@ -394,7 +394,7 @@
         }
 
         // Fade-in over specified duration (ms)
-        function fadeIn(audioElement, duration = 2000) {
+        function fadeIn(audioElement, duration = 8000) {
             return new Promise((resolve) => {
                 // If already fading, stop previous
                 stopFade();
@@ -445,7 +445,7 @@
             if (isPlaying) return;
             // Reset volume to 0 before fade
             audio.volume = 0;
-            await fadeIn(audio, 2000);
+            await fadeIn(audio, 8000);
             isPlaying = true;
             updateMusicButton();
         }
